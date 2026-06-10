@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<style>
+
+body{
+    margin:0;
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    overflow:hidden;
+}
+
+.container{
+    display:flex;
+    height:100vh;
+}
+
+.codeBox{
+    width:50%;
+    padding:20px;
+    font-size:24px;
+    border-right:2px solid white;
+    overflow-y:auto;
+    box-sizing:border-box;
+}
+
+.line{
+    padding:12px;
+    margin:12px;
+    border-radius:10px;
+    transition:0.5s;
+}
+
+.active{
+    background:#2563eb;
+    transform:scale(1.02);
+}
+
+.memoryBox{
+    width:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+#memory{
+    background:#16a34a;
+    padding:40px;
+    border-radius:20px;
+    font-size:28px;
+    min-width:250px;
+    text-align:center;
+}
+
+.controls{
+    position:fixed;
+    bottom:20px;
+    width:100%;
+    text-align:center;
+}
+
+button{
+    padding:12px 20px;
+    margin:10px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="codeBox" id="codeBox"></div>
+
+    <div class="memoryBox">
+
+        <div id="memory">
+            Waiting...
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="controls">
+
+    <button onclick="playAnimation()">
+        ▶ Play
+    </button>
+
+    <button onclick="pauseAnimation()">
+        ⏸ Pause
+    </button>
+
+    <button onclick="goBack()">
+        ⬅ Back
+    </button>
+
+</div>
+
+
+
+<script>
+
+
+let code =
+localStorage.getItem("studentCode") || "";
+
+
+// remove empty lines
+let codeLines =
+code
+.split("\n")
+.filter(
+line => line.trim() !== ""
+);
+
+
+
+let steps =
+JSON.parse(
+localStorage.getItem("steps")
+) || [];
+
+
+
+let codeBox =
+document.getElementById("codeBox");
+
+
+
+// show code
+for(let i=0; i<codeLines.length; i++){
+
+    codeBox.innerHTML +=
+
+    "<div class='line' id='line"+i+"'>" +
+
+    (i+1) +
+
+    ". " +
+
+    codeLines[i] +
+
+    "</div>";
+
+}
+
+
+
+let current = 0;
+
+let paused = true;
+
+let timer = null;
+
+
+
+function speak(text){
+
+    let voice =
+
+    new SpeechSynthesisUtterance(
+        text
+    );
+
+    voice.rate = 0.9;
+
+    voice.pitch = 1;
+
+    speechSynthesis.speak(
+        voice
+    );
+
+}
+
+
+
+function playStep(){
+
+    if(paused) return;
+
+    if(current >= codeLines.length){
+
+        showFinalOutput();
+
+        return;
+
+    }
+
+
+
+    document
+    .querySelectorAll(".line")
+    .forEach(
+        x=>x.classList.remove("active")
+    );
+
+
+
+    let activeLine =
+
+    document.getElementById(
+        "line"+current
+    );
+
+
+
+    activeLine
+    .classList
+    .add("active");
+
+
+
+    // auto scroll
+    activeLine.scrollIntoView({
+
+        behavior:"smooth",
+
+        block:"center"
+
+    });
+
+
+
+    let currentCode =
+
+    codeLines[current];
+
+
+
+    // STEP 1: read code line first
+    speak(
+
+        "Line " +
+
+        (current+1) +
+
+        ". " +
+
+        currentCode
+
+    );
+
+
+
+    // STEP 2: explain after reading
+    setTimeout(()=>{
+
+
+        // print line
+        if(
+            currentCode.includes(
+                "print"
+            )
+        ){
+
+            let lastStep =
+
+            steps[
+                steps.length-1
+            ];
+
+
+
+            let vars =
+
+            lastStep.variables;
+
+
+
+            let keys =
+
+            Object.keys(vars);
+
+
+
+            let lastVar =
+
+            keys[
+                keys.length-1
+            ];
+
+
+
+            let output =
+
+            vars[lastVar];
+
+
+
+            document
+            .getElementById(
+                "memory"
+            )
+            .innerHTML =
+
+            "🖥 OUTPUT<br><br>" +
+
+            output;
+
+
+
+            speak(
+
+                "Now print statement executes. " +
+
+                "Output is " +
+
+                output
+
+            );
+
+        }
+
+
+
+        else{
+
+            let variables =
+
+            steps[current]
+            .variables;
+
+
+
+            let keys =
+
+            Object.keys(
+                variables
+            );
+
+
+
+            let variable =
+
+            keys[
+                keys.length-1
+            ];
+
+
+
+            let value =
+
+            variables[
+                variable
+            ];
+
+
+
+            document
+            .getElementById(
+                "memory"
+            )
+            .innerHTML =
+
+            "📦 " +
+
+            variable +
+
+            "<br><br>" +
+
+            value;
+
+
+
+            speak(
+
+                "Now line " +
+
+                (current+1) +
+
+                " executes. " +
+
+                "Variable " +
+
+                variable +
+
+                " gets value " +
+
+                value
+
+            );
+
+        }
+
+
+
+        current++;
+
+
+
+        timer =
+
+        setTimeout(
+
+            playStep,
+
+            5000
+
+        );
+
+
+    },3000);
+
+}
+
+
+
+function showFinalOutput(){
+
+    let lastStep =
+
+    steps[
+        steps.length-1
+    ];
+
+
+
+    let vars =
+
+    lastStep.variables;
+
+
+
+    let keys =
+
+    Object.keys(vars);
+
+
+
+    let lastVar =
+
+    keys[
+        keys.length-1
+    ];
+
+
+
+    let output =
+
+    vars[lastVar];
+
+
+
+    document
+    .getElementById(
+        "memory"
+    )
+    .innerHTML =
+
+    "✅ FINAL OUTPUT<br><br>" +
+
+    output;
+
+
+
+    speak(
+
+        "The final output of this program is " +
+
+        output
+
+    );
+
+}
+
+
+
+function playAnimation(){
+
+    if(!paused) return;
+
+    paused = false;
+
+    playStep();
+
+}
+
+
+
+function pauseAnimation(){
+
+    paused = true;
+
+    clearTimeout(timer);
+
+    speechSynthesis.cancel();
+
+}
+
+
+
+function goBack(){
+
+    window.location.href =
+
+    "index.html";
+
+}
+
+</script>
+
+</body>
+</html>

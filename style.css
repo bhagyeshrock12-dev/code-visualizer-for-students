@@ -1,0 +1,14 @@
+body{
+    font-family: Arial;
+    text-align:center;
+}
+
+textarea{
+    width:400px;
+    height:150px;
+}
+
+#output{
+    margin-top:20px;
+    font-size:20px;
+}

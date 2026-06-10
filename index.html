@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<body style="background:rgb(32, 108, 116);color:white;text-align:center;">
+
+<h1>Code Visualizer</h1>
+
+<textarea
+id="codeInput"
+rows="10"
+cols="40">
+
+a=5
+b=10
+c=a+b
+print(c)
+
+</textarea>
+
+<br><br>
+
+<button onclick="runCode()">
+
+Run Code
+
+</button>
+
+
+
+<script>
+
+async function runCode(){
+
+    let code =
+
+    document
+    .getElementById(
+        "codeInput"
+    )
+    .value;
+
+
+
+    // save code
+    localStorage.setItem(
+
+        "studentCode",
+
+        code
+
+    );
+
+
+
+    // send to backend
+    let response =
+
+    await fetch(
+
+        "http://127.0.0.1:8001/run",
+
+        {
+            method:"POST",
+
+            headers:{
+                "Content-Type":
+                "application/json"
+            },
+
+            body:JSON.stringify({
+
+                code:code
+
+            })
+
+        }
+
+    );
+
+
+
+    let result =
+
+    await response.json();
+
+
+
+    // save steps
+    localStorage.setItem(
+
+        "steps",
+
+        JSON.stringify(
+            result.steps
+        )
+
+    );
+
+
+
+    // open next page
+    window.location.href =
+
+    "animation.html";
+
+}
+
+</script>
+
+</body>
+</html>
